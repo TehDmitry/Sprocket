@@ -6,6 +6,8 @@ import adsk.fusion
 import adsk.cam
 import traceback
 import math
+import json
+import os
 
 # Gobal variables used to maintain a reference to all event handlers
 handlers = []
@@ -21,6 +23,8 @@ default_number_of_teeth = 40
 default_roller_diameter = 0.79502  # cm, .313 in
 default_thickness = 0.635  # cm
 
+addin_path = os.path.dirname(os.path.realpath(__file__)) 
+chain_sizes = {}
 
 def createNewComponent():
     product = app.activeProduct
@@ -244,8 +248,20 @@ class CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
                 ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
 
+def getChainSizeByName(name):
+    global chain_sizes
+    if name in chain_sizes:
+         return chain_sizes[name]
+    return {}
+
 def run(context):
     try:
+        global chain_sizes
+        f = open(addin_path + '/chain_sizes.json')
+        chain_sizes = json.load(f)
+        f.close()
+
+
         product = app.activeProduct
         design = adsk.fusion.Design.cast(product)
         if not design:

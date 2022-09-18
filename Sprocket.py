@@ -237,9 +237,10 @@ class CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
                 'sprocket_name', 'Sprocket Name', default_sprocket_name)
             inputs.addValueInput('chain_pitch', 'Chain Pitch', 'in',
                                  adsk.core.ValueInput.createByReal(default_chain_pitch))
-            inputs.addValueInput('number_of_teeth', 'Number Of Teeth', '',
-                                 adsk.core.ValueInput.createByReal(default_number_of_teeth))
-            inputs.addValueInput('roller_diameter', 'Roller Diameter', 'in',
+
+            inputs.addIntegerSpinnerCommandInput('number_of_teeth', 'Number Of Teeth', 4, 1000, 1, default_number_of_teeth)
+
+            input_roller_diameter = inputs.addValueInput('roller_diameter', 'Roller Diameter', 'in',
                                  adsk.core.ValueInput.createByReal(default_roller_diameter))
             inputs.addValueInput('sprocket_thickness', 'Sprocket Thickness',
                                  'in', adsk.core.ValueInput.createByReal(default_thickness))

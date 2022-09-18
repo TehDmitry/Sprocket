@@ -1,0 +1,14 @@
+{
+    "06B":
+    {
+        "chain_pitch": "3/8",
+        "roller_diameter": "0.25 in",
+        "sprocket_thickness": "5.31 mm"
+    }, 
+    "08B":
+    {
+        "chain_pitch": "0.5 in",
+        "roller_diameter": "8.51 mm",
+        "sprocket_thickness": "7.2 mm"
+    }
+}

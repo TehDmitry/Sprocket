@@ -165,8 +165,13 @@ class SprocketComponent:
 
 class CommandExecuteHandler(adsk.core.CommandEventHandler):
 
-    def __init__(self):
+    def __init__(self, input_chain_pitch: adsk.core.ValueCommandInput, input_roller_diameter: adsk.core.ValueCommandInput, input_sprocket_thickness: adsk.core.ValueCommandInput):
         super().__init__()
+        self.input_chain_pitch = input_chain_pitch
+        self.input_roller_diameter = input_roller_diameter
+        self.input_sprocket_thickness = input_sprocket_thickness
+
+        self.lastSelectedChain = ''
 
     def notify(self, args):
         try:
@@ -177,16 +182,27 @@ class CommandExecuteHandler(adsk.core.CommandEventHandler):
                 if input.id == 'sprocket_name':
                     sprocket_name = input.value
                 elif input.id == 'chain_pitch':
-                    chain_pitch = unitsMgr.evaluateExpression(
-                        input.expression, "in")
+                    # chain_pitch = unitsMgr.evaluateExpression(input.expression, "in")
+                    chain_pitch = unitsMgr.evaluateExpression(input.expression)
                 elif input.id == 'number_of_teeth':
                     number_of_teeth = int(input.value)
                 elif input.id == 'roller_diameter':
-                    roller_diameter = unitsMgr.evaluateExpression(
-                        input.expression, "in")
+                    # roller_diameter = unitsMgr.evaluateExpression(input.expression, "in")
+                    roller_diameter = unitsMgr.evaluateExpression(input.expression)
                 elif input.id == 'sprocket_thickness':
-                    thickness = unitsMgr.evaluateExpression(
-                        input.expression, "in")
+                    # thickness = unitsMgr.evaluateExpression(input.expression, "in")
+                    thickness = unitsMgr.evaluateExpression(input.expression)
+                elif input.id == 'chain_size':
+                    if self.lastSelectedChain != input.selectedItem.name:
+                        self.lastSelectedChain = input.selectedItem.name #handle deadloop
+
+                        if input.selectedItem.name != 'select':
+                            chain = getChainSizeByName(input.selectedItem.name)
+                            if chain:
+                                # self.input_chain_pitch.expression = unitsMgr.evaluateExpression(chain['chain_pitch'])
+                                self.input_chain_pitch.expression = chain['chain_pitch']
+                                self.input_roller_diameter.expression = chain['roller_diameter']
+                                self.input_sprocket_thickness.expression = chain['sprocket_thickness']
 
             if (sprocket_name and chain_pitch and number_of_teeth and roller_diameter and thickness) \
                     and (chain_pitch > 0 and number_of_teeth > 0 and roller_diameter > 0):
@@ -220,9 +236,33 @@ class CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
         try:
             cmd = args.command
             cmd.isRepeatable = False
-            on_execute = CommandExecuteHandler()
+
+
+            inputs = cmd.commandInputs
+
+            dropdownInput4 = inputs.addDropDownCommandInput('chain_size', 'Chain size', adsk.core.DropDownStyles.TextListDropDownStyle)
+            dropdown4Items = dropdownInput4.listItems
+            dropdown4Items.add('select', True, '')
+
+            global chain_sizes
+            for key in chain_sizes.keys():
+                dropdown4Items.add(key, False, '')
+
+            inputs.addStringValueInput(
+                'sprocket_name', 'Sprocket Name', default_sprocket_name)
+            input_chain_pitch = inputs.addValueInput('chain_pitch', 'Chain Pitch', 'in',
+                                 adsk.core.ValueInput.createByReal(default_chain_pitch))
+
+            inputs.addIntegerSpinnerCommandInput('number_of_teeth', 'Number Of Teeth', 4, 1000, 1, default_number_of_teeth)
+
+            input_roller_diameter = inputs.addValueInput('roller_diameter', 'Roller Diameter', 'in',
+                                 adsk.core.ValueInput.createByReal(default_roller_diameter))
+            input_sprocket_thickness = inputs.addValueInput('sprocket_thickness', 'Sprocket Thickness',
+                                 'in', adsk.core.ValueInput.createByReal(default_thickness))
+
+            on_execute = CommandExecuteHandler(input_chain_pitch, input_roller_diameter, input_sprocket_thickness)
             cmd.execute.add(on_execute)
-            on_execute_preview = CommandExecuteHandler()
+            on_execute_preview = CommandExecuteHandler(input_chain_pitch, input_roller_diameter, input_sprocket_thickness)
             cmd.executePreview.add(on_execute_preview)
             on_destroy = CommandDestroyHandler()
             cmd.destroy.add(on_destroy)
@@ -231,19 +271,6 @@ class CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
             handlers.append(on_execute_preview)
             handlers.append(on_destroy)
 
-            inputs = cmd.commandInputs
-
-            inputs.addStringValueInput(
-                'sprocket_name', 'Sprocket Name', default_sprocket_name)
-            inputs.addValueInput('chain_pitch', 'Chain Pitch', 'in',
-                                 adsk.core.ValueInput.createByReal(default_chain_pitch))
-
-            inputs.addIntegerSpinnerCommandInput('number_of_teeth', 'Number Of Teeth', 4, 1000, 1, default_number_of_teeth)
-
-            input_roller_diameter = inputs.addValueInput('roller_diameter', 'Roller Diameter', 'in',
-                                 adsk.core.ValueInput.createByReal(default_roller_diameter))
-            inputs.addValueInput('sprocket_thickness', 'Sprocket Thickness',
-                                 'in', adsk.core.ValueInput.createByReal(default_thickness))
         except:
             if ui:
                 ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

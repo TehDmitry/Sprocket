@@ -139,6 +139,13 @@ class SprocketComponent:
         extrudes.add(ext_input)
 
     def build_sprocket(self):
+        self._comp.name = self.name  + ' Z=' + str(self.number_of_teeth)
+        self._comp.description =  json.dumps({
+            'chain_pitch': round(self.chain_pitch, 4), 
+            'number_of_teeth': round(self.number_of_teeth, 4), 
+            'roller_diameter': round(self.roller_diameter, 4), 
+            'thickness': round(self.thickness, 4)})
+
         sketches = self._comp.sketches
         xy_plane = self._comp.xYConstructionPlane
 
